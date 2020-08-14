@@ -1,6 +1,7 @@
 <template>
-  <transition name="fade">
+  <!-- <transition name="fade"> -->
     <div
+      v-if="myVisible"
       class="start-task-modal"
       @click="onClick"
     >
@@ -10,11 +11,20 @@
         <md-input v-model="task.name"></md-input>
       </md-field>
       <div class="button-group">
-        <md-button class="">开始</md-button>
-        <md-button class="md-accent">取消</md-button>
+        <md-button
+         @click="begin"
+        >
+          开始
+        </md-button>
+        <md-button
+          class="md-accent"
+          @click="cancel"
+        >
+          取消
+        </md-button>
       </div>
     </div>
-  </transition>
+  <!-- </transition> -->
 </template>
 
 <script>
@@ -26,14 +36,39 @@ function createEmptyTask() {
 
 export default {
   name: 'StartTaskModal',
+  props: {
+    visible: {
+      type: Boolean,
+      default: false,
+    }
+  },
+  computed: {
+    myVisible: {
+      get() {
+        return this.visible;
+      },
+      set(v) {
+        this.$emit('update:visible', v);
+      }
+    }
+  },
   data() {
       return {
-          task: createEmptyTask(),
+        task: createEmptyTask(),
       };
   },
   methods: {
     onClick(e) {
       e.stopPropagation();
+    },
+    begin() {
+      const { task } = this;
+      this.myVisible = false;
+      this.$emit('begin', { task });
+    },
+    cancel() {
+      this.myVisible = false;
+      this.$emit('cancel');
     }
   }
 }

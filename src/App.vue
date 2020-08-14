@@ -1,16 +1,24 @@
 <template>
-  <div id="app">
+  <div id="app" :class="`${status.appClass || ''}`">
     <audio class="audio-player" id="audio-player__start" src="./assets/start.wav"></audio>
     <audio class="audio-player" id="audio-player__pause" src="./assets/pause.wav"></audio>
     <div
       class="chan"
-      :class="{ dropdown: startModalVisible }"
+      :class="`${status.fontClass || ''}`"
       @click="trigger"
     >
+      <div
+        class="task-name"
+        v-if="status.value === STATE.DOING.value"
+      >
+        {{ task.name }}
+      </div>
       {{ status.alias }}
       <start-task-modal
-        v-if="startModalVisible"
+        :visible.sync="startModalVisible"
         class="start-modal"
+        @begin="onBegin"
+        @cancel="onCancelBegin"
       />
     </div>
   </div>
@@ -30,16 +38,23 @@ const STATE = {
     alias: '禅',
     value: "START"
   },
+  BEFORE_DOING: {
+    alias: '禅',
+    value: 'BEFORE_DOING',
+    appClass: 'app__before-doing',
+    fontClass: 'dropdown font__before-doing'
+  },
   DOING: {
     alias: '休',
-    value: "DOING"
+    value: "DOING",
+    appClass: 'app__doing',
+    fontClass: 'font__doing'
   },
   PAUSED: {
     alias: '修',
     value: "PAUSED"
   }  
 };
-
 
 export default {
   name: 'App',
@@ -48,8 +63,10 @@ export default {
   },
   data() {
     return {
+      STATE,
       status: STATE.START,
       startModalVisible: false,
+      task: null,
     };
   },
   mounted() {
@@ -61,27 +78,38 @@ export default {
   },
   methods: {
     trigger() {
-      if(this.status.value === 'START') {
-        this.start();
+      if(this.status.value === STATE.START.value) {
+        this.beforeStart();
         return;
       }
-      if(this.status.value === 'DOING') {
+      if(this.status.value === STATE.DOING.value) {
         this.pause();
         return;
       }
-      if(this.status.value === 'PAUSED') {
+      if(this.status.value === STATE.PAUSED.value) {
         this.start();
         return;
       }
+    },
+    beforeStart() {
+      this.startModalVisible = true;
+      this.status = STATE.BEFORE_DOING;
     },
     start() {
       document.getElementById('audio-player__start').play();
       this.status = STATE.DOING;
-      // this.startModalVisible = true;
     },
     pause() {
       document.getElementById('audio-player__pause').play();
       this.status = STATE.PAUSED;
+    },
+    onBegin({ task }) {
+      this.task = task;
+      this.start();
+    },
+    onCancelBegin() {
+      this.startModalVisible = false;
+      this.status = STATE.START;
     }
   }
 }
@@ -98,6 +126,8 @@ html, body {
 #app {
   width: 100%;
   height: 100%;
+  transition: background 0.2s ease-in-out;
+
   .chan {
     position: absolute;
     line-height: 1;
@@ -107,6 +137,7 @@ html, body {
     font-size: 111px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
+
     &:hover {
       color: white;
     }
@@ -119,6 +150,33 @@ html, body {
         transform: translateX(-50%);
       }
     }
+    &.font__before-doing {
+      color: white;
+    }
+    &.font__doing {
+      color: white;
+    }
+  }
+
+  .task-name {
+    position: absolute;
+    padding: 20px;
+    line-height: 1;
+    font-size: 50px;
+    border: 4px solid black;
+    top: -20px;
+    left: 50%;
+    transform: translate(-50%, -100%);
+    border-radius: 10px;
+    color: black;
+    white-space: nowrap;
+  }
+
+  &.app__before-doing {
+    background: grey;
+  }
+  &.app__doing {
+    background: grey;
   }
 }
 #audio-player {
